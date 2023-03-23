@@ -1,0 +1,612 @@
+<template>
+	<view class="tabs">
+		<view class="page-header">
+			<view class="page-header-wrapper">
+				<view class="page-header-left"><uni-icons type="scan" color="#fafafa" size="25" /></view>
+				<view class="page-header-center"><text @click="toUrl('/pages/search/search')" class="search-input">输入关键字搜索</text></view>
+				<view class="page-header-right" @click="toUrl('/pages/list/create')">
+					<uni-icons type="camera" color="#fafafa" size="25" />
+					<text class="contribute-text">发布</text>
+				</view>
+			</view>
+		</view>
+		<scroll-view id="tab-bar" class="scroll-h" :scroll-x="true" :show-scrollbar="false" :scroll-into-view="scrollInto">
+			<view v-for="(tab, index) in tabBars" :key="tab.id" class="uni-tab-item" :id="tab.id" :data-current="index" @click="ontabtap">
+				<text class="uni-tab-item-title" :class="isScroll(index) ? 'uni-tab-item-title-active' : ''">{{ tab.name }}</text>
+				<!-- 下划线 -->
+				<view style="width:100%" :class="isScroll(index) ? 'underlinebox' : 'underlinebox-active'"><view class="underline"></view></view>
+			</view>
+		</scroll-view>
+		<view class="line-h"></view>
+		<swiper :current="tabIndex" class="swiper-box" style="flex: 1;" :duration="300" @change="ontabchange">
+			<swiper-item class="swiper-item" v-for="(tab, index1) in newsList" :key="index1">
+				<!-- #ifdef APP-NVUE -->
+				<list class="scroll-v list" enableBackToTop="true" scroll-y loadmoreoffset="15" @loadmore="loadMore(index1)">
+					<refresh class="refresh" @refresh="onrefresh(index1)" @pullingdown="onpullingdown" :display="tab.refreshing ? 'show' : 'hide'">
+						<div class="refresh-view">
+							<image
+								class="refresh-icon"
+								:src="refreshIcon"
+								:style="{ width: tab.refreshing || pulling ? 0 : '30px' }"
+								:class="{ 'refresh-icon-active': tab.refreshFlag }"
+							></image>
+							<loading-indicator class="loading-icon" animating="true" v-if="tab.refreshing"></loading-indicator>
+							<text class="loading-text">{{ tab.refreshText }}</text>
+						</div>
+					</refresh>
+					<cell v-for="(newsitem, index2) in tab.data" :key="newsitem.id">
+						<media-item :options="newsitem" @close="close(index1, index2)" @click="goDetail(newsitem, index2)"></media-item>
+					</cell>
+					<cell class="loading-more" v-if="tab.isLoading || tab.data.length > 4">
+						<text class="loading-more-text">{{ tab.loadingText }}</text>
+					</cell>
+				</list>
+				<!-- #endif -->
+				<!-- #ifndef APP-NVUE -->
+				<scroll-view class="scroll-v list" enableBackToTop="true" scroll-y @scrolltolower="loadMore(index1)">
+					<view v-for="(newsitem, index2) in tab.data" :key="newsitem.id">
+						<media-item :options="newsitem" @close="close(index1, index2)" @click="goDetail(newsitem)"></media-item>
+					</view>
+					<view class="loading-more" v-if="tab.isLoading || tab.data.length > 4">
+						<text class="loading-more-text">{{ tab.loadingText }}</text>
+					</view>
+				</scroll-view>
+				<!-- #endif -->
+			</swiper-item>
+		</swiper>
+	</view>
+</template>
+<script>
+import mediaItem from './news-item.nvue';
+import uniIcons from '@/components/uni-icons/uni-icons.vue';
+// 缓存每页最多
+const MAX_CACHE_DATA = 100;
+// 缓存页签数量
+const MAX_CACHE_PAGE = 3;
+
+const newsData = {
+	data0: {
+		datetime: '40分钟前',
+		article_type: 0,
+		title: 'uni-app行业峰会频频亮相，开发者反响热烈!',
+		source: 'DCloud',
+		comment_count: 639,
+		isVideo: false
+	},
+	data1: {
+		datetime: '一天前',
+		article_type: 1,
+		title: 'DCloud完成B2轮融资，uni-app震撼发布!',
+		image_url: 'https://img-cdn-qiniu.dcloud.net.cn/uniapp/images/shuijiao.jpg?imageView2/3/w/200/h/100/q/90',
+		source: 'DCloud',
+		comment_count: 11395,
+		isVideo: false
+	},
+	data2: {
+		datetime: '一天前',
+		article_type: 2,
+		title: '中国技术界小奇迹：HBuilder开发者突破200万',
+		image_url: 'https://img-cdn-qiniu.dcloud.net.cn/uniapp/images/muwu.jpg?imageView2/3/w/200/h/100/q/90',
+		source: 'DCloud',
+		comment_count: 11395,
+		isVideo: false
+	},
+	data3: {
+		article_type: 3,
+		image_list: [
+			{
+				url: 'https://img-cdn-qiniu.dcloud.net.cn/uniapp/images/cbd.jpg?imageView2/3/w/200/h/100/q/90',
+				width: 563,
+				height: 316
+			},
+			{
+				url: 'https://img-cdn-qiniu.dcloud.net.cn/uniapp/images/muwu.jpg?imageView2/3/w/200/h/100/q/90',
+				width: 641,
+				height: 360
+			},
+			{
+				url: 'https://img-cdn-qiniu.dcloud.net.cn/uniapp/images/shuijiao.jpg?imageView2/3/w/200/h/100/q/90',
+				width: 640,
+				height: 360
+			}
+		],
+		datetime: '5分钟前',
+		title: 'uni-app 支持使用 npm 安装第三方包，生态更趋丰富',
+		source: 'DCloud',
+		comment_count: 11,
+		isVideo: false
+	},
+	data4: {
+		datetime: '2小时前',
+		article_type: 4,
+		title: 'uni-app 支持原生小程序自定义组件，更开放、更自由',
+		image_url: 'https://img-cdn-qiniu.dcloud.net.cn/uniapp/images/cbd.jpg?imageView2/3/w/200/h/100/q/90',
+		source: 'DCloud',
+		comment_count: 69,
+		isVideo: true
+	}
+};
+
+export default {
+	components: {
+		mediaItem,
+		uniIcons
+	},
+	data() {
+		return {
+			newsList: [],
+			cacheTab: [],
+			tabIndex: 0,
+			lastIndex: 0, //上一次的坐标
+			tabBars: [
+				{
+					name: '关注',
+					id: 'guanzhu'
+				},
+				{
+					name: '推荐',
+					id: 'tuijian'
+				},
+				{
+					name: '体育',
+					id: 'tiyu'
+				},
+				{
+					name: '热点',
+					id: 'redian'
+				},
+				{
+					name: '财经',
+					id: 'caijing'
+				},
+				{
+					name: '娱乐',
+					id: 'yule'
+				},
+				{
+					name: '军事',
+					id: 'junshi'
+				},
+				{
+					name: '历史',
+					id: 'lishi'
+				},
+				{
+					name: '本地',
+					id: 'bendi'
+				},
+				{
+					name: '科技',
+					id: 'keji'
+				},
+				{
+					name: '图片',
+					id: 'tupian'
+				},
+				{
+					name: '音频',
+					id: 'yinpin'
+				},
+				{
+					name: '问答',
+					id: 'wenda'
+				},
+				{
+					name: '国际',
+					id: 'guoji'
+				},
+				{
+					name: '文化',
+					id: 'wenhua'
+				},
+				{
+					name: '读书',
+					id: 'dushu'
+				},
+				{
+					name: '游戏',
+					id: 'youxi'
+				},
+				{
+					name: '音乐',
+					id: 'yinyue'
+				},
+				{
+					name: '小说',
+					id: 'xiaoshuo'
+				},
+				{
+					name: '其他',
+					id: 'qita'
+				}
+			],
+			scrollInto: '',
+			showTips: false,
+			navigateFlag: false,
+			pulling: false,
+			refreshIcon:
+				'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAB5QTFRFcHBw3Nzct7e39vb2ycnJioqK7e3tpqam29vb////D8oK7wAAAAp0Uk5T////////////ALLMLM8AAABxSURBVHja7JVBDoAgDASrjqj//7CJBi90iyYeOHTPMwmFZrHjYyyFYYUy1bwUZqtJIYVxhf1a6u0R7iUvWsCcrEtwJHp8MwMdvh2amHduiZD3rpWId9+BgPd7Cc2LIkPyqvlQvKxKBJ//Qwq/CacAAwDUv0a0YuKhzgAAAABJRU5ErkJggg=='
+		};
+	},
+	onLoad() {
+		setTimeout(() => {
+			this.tabBars.forEach(tabBar => {
+				this.newsList.push({
+					data: [],
+					isLoading: false,
+					refreshText: '',
+					loadingText: '加载更多...'
+				});
+			});
+			this.getList(0);
+		}, 350);
+	},
+	methods: {
+		isScroll(index) {
+			return this.tabIndex == index;
+		},
+		//新闻详情
+		goDetail(item, index) {
+			let data = {
+				id: index,
+				title: item.title,
+				author: '详情',
+				time: item.datetime
+			};
+			let url = item.isVideo == true ? 'videoDetails' : 'details';
+			uni.navigateTo({
+				url: `/pages/details/${url}?data=${JSON.stringify(data)}`
+			});
+		},
+		getList(index) {
+			let activeTab = this.newsList[index];
+			let list = [];
+			for (let i = 1; i <= 10; i++) {
+				let item = Object.assign({}, newsData['data' + Math.floor(Math.random() * 5)]);
+				item.id = this.newGuid();
+				list.push(item);
+			}
+			activeTab.data = activeTab.data.concat(list);
+		},
+		close(index1, index2) {
+			uni.showModal({
+				content: '是否删除本条信息？',
+				success: res => {
+					if (res.confirm) {
+						this.newsList[index1].data.splice(index2, 1);
+					}
+				}
+			});
+		},
+		loadMore(e) {
+			setTimeout(() => {
+				this.getList(this.tabIndex);
+			}, 500);
+		},
+		ontabtap(e) {
+			let index = e.target.dataset.current || e.currentTarget.dataset.current;
+			this.isLeft = this.switchTab(index);
+		},
+		ontabchange(e) {
+			let index = e.target.current || e.detail.current;
+			this.switchTab(index);
+		},
+		switchTab(index) {
+			if (this.newsList[index].data.length === 0) {
+				this.getList(index);
+			}
+
+			if (this.tabIndex === index) {
+				return;
+			}
+
+			// 缓存 tabId
+			if (this.newsList[this.tabIndex].data.length > MAX_CACHE_DATA) {
+				let isExist = this.cacheTab.indexOf(this.tabIndex);
+				if (isExist < 0) {
+					this.cacheTab.push(this.tabIndex);
+					//console.log("cache index:: " + this.tabIndex);
+				}
+			}
+
+			this.tabIndex = index;
+			console.log(this.tabIndex);
+			console.log(this.lastIndex);
+
+			if (this.tabIndex < 5 && this.lastIndex < this.tabIndex) {
+				this.lastIndex = this.tabIndex;
+				return;
+			} else if (index >= 5) {
+				this.scrollInto = this.tabBars[index - 5].id;
+			}
+			// this.scrollInto = this.tabBars[index].id;
+			this.lastIndex = this.tabIndex;
+			// 释放 tabId
+			if (this.cacheTab.length > MAX_CACHE_PAGE) {
+				let cacheIndex = this.cacheTab[0];
+				this.clearTabData(cacheIndex);
+				this.cacheTab.splice(0, 1);
+				//console.log("remove cache index:: " + cacheIndex);
+			}
+		},
+		clearTabData(e) {
+			this.newsList[e].data.length = 0;
+			this.newsList[e].loadingText = '加载更多...';
+		},
+		refreshData() {},
+		onrefresh(e) {
+			var tab = this.newsList[this.tabIndex];
+			if (!tab.refreshFlag) {
+				return;
+			}
+			tab.refreshing = true;
+			tab.refreshText = '正在刷新...';
+
+			setTimeout(() => {
+				this.refreshData();
+				this.pulling = true;
+				tab.refreshing = false;
+				tab.refreshFlag = false;
+				tab.refreshText = '已刷新';
+				setTimeout(() => {
+					// TODO fix ios和Android 动画时间相反问题
+					this.pulling = false;
+				}, 500);
+			}, 2000);
+		},
+		onpullingdown(e) {
+			var tab = this.newsList[this.tabIndex];
+			if (tab.refreshing || this.pulling) {
+				return;
+			}
+			if (Math.abs(e.pullingDistance) > Math.abs(e.viewHeight)) {
+				tab.refreshFlag = true;
+				tab.refreshText = '释放立即刷新';
+			} else {
+				tab.refreshFlag = false;
+				tab.refreshText = '下拉可以刷新';
+			}
+		},
+		newGuid() {
+			let s4 = function() {
+				return ((65536 * (1 + Math.random())) | 0).toString(16).substring(1);
+			};
+			return (s4() + s4() + '-' + s4() + '-4' + s4().substr(0, 3) + '-' + s4() + '-' + s4() + s4() + s4()).toUpperCase();
+		}
+	}
+};
+</script>
+
+<style>
+.imgplay {
+	text-align: center;
+	width: 40px;
+}
+.imgplay .icon {
+	color: #ffffff;
+	font-size: 120rpx;
+}
+/* 头条小程序组件内不能引入字体 */
+/* #ifdef MP-TOUTIAO */
+@font-face {
+	font-family: uniicons;
+	font-weight: normal;
+	font-style: normal;
+	src: url('~@/static/uni.ttf') format('truetype');
+}
+/* #endif */
+
+/* 顶部标题栏 */
+.page-header {
+	background-color: #ec706b;
+}
+.page-header-wrapper {
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	/* #ifdef APP-PLUS */
+	height: var(--status-bar-height);
+	/* #endif */
+	padding: 20upx 10upx 15upx 10upx;
+	/* background-color: #ec706b; */
+	/* margin-top: 30px; */
+}
+
+.page-header-left {
+	opacity: 0.9;
+	float: left;
+	padding-top: 20px;
+}
+
+.page-header-center {
+	flex: 1;
+	padding: 0px 30px 0 20px;
+	text-align: center;
+}
+
+.search-input {
+	height: 40px;
+	font-size: 14px;
+	color: #999999;
+	text-align: center;
+	line-height: 70upx;
+	border-radius: 100px;
+	background-color: #fff;
+	padding-top: 10upx;
+	padding-bottom: 10upx;
+	margin-top: 60upx;
+}
+
+.page-header-right {
+	width: 63upx;
+	align-items: center;
+	float: right;
+	padding-top: 60upx;
+}
+
+.contribute-text {
+	font-size: 32upx;
+	color: #fff;
+}
+
+/* #ifndef APP-PLUS */
+page {
+	width: 100%;
+	min-height: 100%;
+	display: flex;
+}
+
+/* #endif */
+
+.tabs {
+	flex: 1;
+	flex-direction: column;
+	overflow: hidden;
+	background-color: #ffffff;
+	/* #ifdef MP-ALIPAY || MP-BAIDU */
+	height: 100vh;
+	/* #endif */
+}
+
+.scroll-h {
+	width: 750rpx;
+	height: 80rpx;
+	flex-direction: row;
+	/* #ifndef APP-PLUS */
+	white-space: nowrap;
+	/* #endif */
+	/* flex-wrap: nowrap; */
+	/* border-color: #cccccc;
+		border-bottom-style: solid;
+		border-bottom-width: 1px; */
+}
+
+.line-h {
+	height: 1rpx;
+	background-color: #cccccc;
+}
+
+.uni-tab-item {
+	/* #ifndef APP-PLUS */
+	display: inline-block;
+	/* #endif */
+	flex-wrap: nowrap;
+	padding-left: 34rpx;
+	padding-right: 34rpx;
+}
+
+.uni-tab-item-title {
+	color: #555;
+	font-size: 30rpx;
+	height: 80rpx;
+	line-height: 80rpx;
+	flex-wrap: nowrap;
+	/* #ifndef APP-PLUS */
+	white-space: nowrap;
+	/* #endif */
+}
+
+.uni-tab-item-title-active {
+	color: #ec706b;
+}
+
+.underlinebox {
+	height: 3px;
+	display: flex;
+	align-content: center;
+	justify-content: center;
+	transition: 0.5s;
+	height: 4px;
+	background-color: #ec706b;
+	margin-top: -10px;
+}
+.underlinebox-active {
+	background-color: none;
+}
+.swiper-box {
+	flex: 1;
+}
+
+.swiper-item {
+	flex: 1;
+	flex-direction: row;
+}
+
+.scroll-v {
+	flex: 1;
+	/* #ifndef MP-ALIPAY */
+	flex-direction: column;
+	/* #endif */
+	width: 750rpx;
+}
+
+.update-tips {
+	position: absolute;
+	left: 0;
+	top: 41px;
+	right: 0;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	background-color: #fddd9b;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+}
+
+.update-tips-text {
+	font-size: 14px;
+	color: #ffffff;
+}
+
+.refresh {
+	width: 750rpx;
+	height: 64px;
+	justify-content: center;
+}
+
+.refresh-view {
+	flex-direction: row;
+	flex-wrap: nowrap;
+	align-items: center;
+	justify-content: center;
+}
+
+.refresh-icon {
+	width: 30px;
+	height: 30px;
+	transition-duration: 0.5s;
+	transition-property: transform;
+	transform: rotate(0deg);
+	transform-origin: 15px 15px;
+}
+
+.refresh-icon-active {
+	transform: rotate(180deg);
+}
+
+.loading-icon {
+	width: 20px;
+	height: 20px;
+	margin-right: 5px;
+	color: #999999;
+}
+
+.loading-text {
+	margin-left: 2px;
+	font-size: 16px;
+	color: #999999;
+}
+
+.loading-more {
+	align-items: center;
+	justify-content: center;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	text-align: center;
+}
+
+.loading-more-text {
+	font-size: 28rpx;
+	color: #999;
+}
+</style>

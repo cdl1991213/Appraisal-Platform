@@ -1,0 +1,37 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/mycenter/forget",
+    "pages/mycenter/register",
+    "pages/msg/msg",
+    "pages/merchandise/shoes/shoes1",
+    "pages/merchandise/shoes/shoes2",
+    "pages/merchandise/shoes/shoes3",
+    "pages/merchandise/phones",
+    "pages/merchandise/wines",
+    "pages/merchandise/hufus/hufus",
+    "pages/merchandise/clothes/clothes",
+    "pages/merchandise/bags",
+    "pages/merchandise/peishis/watches",
+    "pages/merchandise/jiadians",
+    "pages/search/search",
+    "pages/merchandise/merchandiselist/merchandiselist",
+    "pages/authentic/authentic",
+    "pages/discuss/discuss",
+    "pages/discuss/sendDiscuss",
+    "pages/authentic/selectCategory",
+    "pages/authentic/selectCategoryList/selectCategoryList",
+    "pages/mycenter/registerSuccess",
+    "pages/mycenter/forgetSuccess",
+    "pages/discuss/sendSuccess"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationStyle": "custom",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "自定义导航",
+    "navigationBarBackgroundColor": "#ff5500"
+  },
+  "usingComponents": {},
+  "sitemapLocation": "sitemap.json"
+}

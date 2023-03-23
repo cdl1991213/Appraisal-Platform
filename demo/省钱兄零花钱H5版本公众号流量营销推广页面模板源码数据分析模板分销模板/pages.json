@@ -1,0 +1,94 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "零花钱"
+			}
+		},
+		{
+			"path": "pages/index/index-back",
+			"style": {
+				"navigationBarTitleText": "零花钱"
+			}
+		},
+		{
+			"path": "pages/member/zhifubao",
+			"style": {
+				"navigationBarTitleText": "提现账号",
+				"app-plus": {
+					"bounce": "none",
+					"titleNView": true
+				}
+			}
+		},
+		{
+			"path": "pages/member/cashList",
+			"style": {
+				"navigationBarTitleText": "提现记录"
+			}
+		},
+
+		{
+			"path": "pages/member/cash",
+			"style": {
+				"navigationBarTitleText": "提现",
+
+				"app-plus": {
+					"bounce": "none",
+					"titleNView": true
+				}
+			}
+		},
+		{
+			"path": "pages/member/yao",
+			"style": {
+				"navigationBarTitleText": "推广中心",
+				"app-plus": {
+					"bounce": "none",
+					"titleNView": true
+				}
+			}
+		},
+
+		{
+			"path": "pages/member/yaoqing",
+			"style": {
+				"navigationBarTitleText": "我的团队",
+				"app-plus": {
+					"bounce": "none",
+					"titleNView": true
+				}
+			}
+		},
+		{
+			"path": "pages/member/customer",
+			"style": {
+				"navigationBarTextStyle": "black",
+				"navigationBarTitleText": "联系客服",
+				"enablePullDownRefresh": false,
+				"app-plus": {
+					"bounce": "none",
+					"titleNView": true
+				}
+			}
+		},
+		{
+			"path": "pages/member/zijing",
+			"style": {
+				"navigationBarTitleText": "我的收入",
+				"app-plus": {
+					"bounce": "none",
+					"titleNView": true
+				}
+			}
+		}
+
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "零花钱",
+		"navigationBarBackgroundColor": "#FFFFFF",
+		"backgroundColor": "#FFFFFF"
+	}
+}

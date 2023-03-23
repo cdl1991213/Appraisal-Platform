@@ -1,0 +1,43 @@
+
+.place3{
+		background-color: #ffffff;
+		height: 42rpx;
+}
+.SHfooter{
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: flex;
+		-webkit-box-orient: horizontal;
+		-webkit-box-direction: normal;
+		-webkit-flex-direction: row;
+		        flex-direction: row;
+		-webkit-box-pack: left;
+		-webkit-justify-content: left;
+		        justify-content: left;
+		-webkit-box-align: left;
+		-webkit-align-items: left;
+		        align-items: left;
+		font-size: 28rpx;
+		margin-top: 10rpx;
+		color: rgba(0,0,0,0.7);
+		text-align: left;
+		height: 40rpx;
+		line-height: 3px;
+}
+.SHfooter text{
+		font-size: 24rpx;
+		margin-left: 15rpx;
+		margin-right: 15rpx;
+}
+.back{
+		margin-left: 20rpx;
+		margin-top: 17rpx;
+}
+.back::before{
+		content:url(/static/authentic/toBack.png) ;
+}
+.categoryList{
+	padding: 36rpx 12rpx;
+	font-weight: bold;
+}
+

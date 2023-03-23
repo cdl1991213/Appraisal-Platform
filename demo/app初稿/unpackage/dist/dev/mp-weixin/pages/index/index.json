@@ -1,0 +1,11 @@
+{
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "tab-game": "/components/tabBar/home",
+    "tab-discovery": "/components/tabBar/category",
+    "tab-information": "/components/tabBar/cart",
+    "tab-data": "/components/tabBar/authentic",
+    "tab-mycenter": "/components/tabBar/mycenter",
+    "tab-myself": "/components/tabBar/usermyself"
+  }
+}
